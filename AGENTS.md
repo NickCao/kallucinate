@@ -1,4 +1,4 @@
-# kallucination - AI Agent Guide
+# kallucinate - AI Agent Guide
 
 ## Project Structure
 

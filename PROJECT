@@ -6,7 +6,7 @@ cliVersion: 4.13.1
 domain: kallucinate.io
 layout:
 - go.kubebuilder.io/v4
-projectName: kallucination
+projectName: kallucinate
 repo: github.com/NickCao/kallucinate
 resources:
 - api:

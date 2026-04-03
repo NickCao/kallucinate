@@ -34,16 +34,16 @@ import (
 )
 
 // namespace where the project is deployed in
-const namespace = "kallucination-system"
+const namespace = "kallucinate-system"
 
 // serviceAccountName created for the project
-const serviceAccountName = "kallucination-controller-manager"
+const serviceAccountName = "kallucinate-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "kallucination-controller-manager-metrics-service"
+const metricsServiceName = "kallucinate-controller-manager-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "kallucination-metrics-binding"
+const metricsRoleBindingName = "kallucinate-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -176,7 +176,7 @@ var _ = Describe("Manager", Ordered, func() {
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
-				"--clusterrole=kallucination-metrics-reader",
+				"--clusterrole=kallucinate-metrics-reader",
 				fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName),
 			)
 			_, err := utils.Run(cmd)

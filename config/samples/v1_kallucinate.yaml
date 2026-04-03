@@ -2,7 +2,7 @@ apiVersion: kallucinate.io/v1
 kind: Kallucinate
 metadata:
   labels:
-    app.kubernetes.io/name: kallucination
+    app.kubernetes.io/name: kallucinate
     app.kubernetes.io/managed-by: kustomize
   name: kallucinate-sample
 spec:

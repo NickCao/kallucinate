@@ -178,10 +178,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&controller.KallucinateReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	reconciller, err := controller.NewKallucinateReconciler(
+		mgr.GetClient(),
+		mgr.GetScheme(),
+	)
+	if err != nil {
+		setupLog.Error(err, "Failed to create controller", "controller", "Kallucinate")
+		os.Exit(1)
+	}
+
+	if err := reconciller.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Failed to create controller", "controller", "Kallucinate")
 		os.Exit(1)
 	}

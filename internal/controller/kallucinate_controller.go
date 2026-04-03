@@ -52,6 +52,13 @@ type KallucinateReconciler struct {
 	runner *runner.Runner
 }
 
+type RequeueArgs struct {
+	Seconds int `json:"seconds"`
+}
+
+type RequeueResult struct {
+}
+
 func NewKallucinateReconciler(kclient client.Client, scheme *runtime.Scheme) (*KallucinateReconciler, error) {
 	openaiModel := genaiopenai.New(genaiopenai.Config{
 		APIKey:    os.Getenv("OPENAI_API_KEY"),
@@ -71,8 +78,8 @@ func NewKallucinateReconciler(kclient client.Client, scheme *runtime.Scheme) (*K
 	requeueTool, err := functiontool.New(functiontool.Config{
 		Name:        "requeue",
 		Description: "requeue the Kallucinate CRD for reconcillation, duration in seconds",
-	}, func(ctx tool.Context, duration int) (bool, error) {
-		return true, nil
+	}, func(ctx tool.Context, args RequeueArgs) (RequeueResult, error) {
+		return RequeueResult{}, nil
 	})
 	if err != nil {
 		return nil, err
@@ -146,7 +153,7 @@ func (r *KallucinateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			genai.NewPartFromText(fmt.Sprintf("The changed kallucinate resource is: namespace(%s), name(%s)", req.Namespace, req.Name)),
 		},
 	}, agent.RunConfig{
-		StreamingMode: agent.StreamingModeSSE,
+		StreamingMode: agent.StreamingModeNone,
 	}) {
 		logger.Info("event", "event", event, "err", err)
 	}

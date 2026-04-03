@@ -66,6 +66,9 @@ spec:
         image: controller:latest
         imagePullPolicy: IfNotPresent
         name: manager
+        envFrom:
+        - secretRef:
+            name: kallucinate
         ports: []
         securityContext:
           readOnlyRootFilesystem: true

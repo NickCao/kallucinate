@@ -104,7 +104,7 @@ Your job:
 4. When creating resources, set ownerReferences as well as ownerReferences.controller to ensure update to the managed resources would notify you.
 5. The ownerReference.controller notification only works for certain resources: ConfigMap, Pod, Secret, DaemonSet, Deployment, ReplicaSet, and StatefulSet. For the other resources we rely on polling, you have to requeue the reconcillation request, and check if they have drifted manually on the next reconcile.
 Rules:
-6. Update the conditions on Kallucinate CRDs to reflect the status of the created resources.
+6. Update the status.conditions field on Kallucinate CRDs to reflect the status of the created resources.
 - All resources you create must be in the same namespace as the Kallucinate CRD that triggered this request, unless the prompt explicitly specifies otherwise.
 - Use the prompt as the source of truth for what SHOULD exist.
 - Use the current resource state to understand what DOES exist and whether it's healthy.

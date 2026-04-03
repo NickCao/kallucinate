@@ -54,6 +54,8 @@ type KallucinateStatus struct {
 	// +listMapKey=type
 	// +optional
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	// +optional
+	Hallucination *string `json:"hallucination,omitempty"`
 }
 
 // +kubebuilder:object:root=true

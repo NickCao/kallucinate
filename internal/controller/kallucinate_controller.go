@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +28,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	kallucinateiov1 "github.com/NickCao/kallucinate/api/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"google.golang.org/adk/agent"
@@ -36,6 +39,7 @@ import (
 	"google.golang.org/adk/runner"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/functiontool"
 	"google.golang.org/adk/tool/mcptoolset"
 	"google.golang.org/genai"
 
@@ -65,6 +69,16 @@ func NewKallucinateReconciler(kclient client.Client, scheme *runtime.Scheme) (*K
 		return nil, err
 	}
 
+	requeueTool, err := functiontool.New(functiontool.Config{
+		Name:        "requeue",
+		Description: "requeue the Kallucinate CRD for reconcillation, duration in seconds",
+	}, func(ctx tool.Context, duration int) (bool, error) {
+		return true, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	kallucinateAgent, err := llmagent.New(llmagent.Config{
 		Name:        "kallucinate",
 		Model:       openaiModel,
@@ -78,8 +92,9 @@ Your job:
 2. If resources already exist, compare their current state against what the prompt describes. Fix any drift, errors, or unhealthy conditions.
 3. Only make changes when necessary. If everything matches the desired state and is healthy, respond with "No changes needed."
 4. When creating resources, set ownerReferences as well as ownerReferences.controller to ensure update to the managed resources would notify you.
+5. The ownerReference.controller notification only works for certain resources: ConfigMap, Pod, Secret, DaemonSet, Deployment, ReplicaSet, and StatefulSet. For the other resources we rely on polling, you have to requeue the reconcillation request, and check if they have drifted manually on the next reconcile.
 Rules:
-- All resources you create must be in the same namespace as the Kallucinate CR that triggered this request, unless the prompt explicitly specifies otherwise.
+- All resources you create must be in the same namespace as the Kallucinate CRD that triggered this request, unless the prompt explicitly specifies otherwise.
 - Use the prompt as the source of truth for what SHOULD exist.
 - Use the current resource state to understand what DOES exist and whether it's healthy.
 - When resources are failing (CrashLoopBackOff, pending, error conditions), diagnose and fix them.
@@ -88,6 +103,7 @@ Rules:
 - After making changes, briefly summarize what you did and why.
 `,
 		Toolsets: []tool.Toolset{k8sMcp},
+		Tools:    []tool.Tool{requeueTool},
 	})
 
 	runner, err := runner.New(runner.Config{
@@ -143,6 +159,13 @@ func (r *KallucinateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 func (r *KallucinateReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kallucinateiov1.Kallucinate{}).
+		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Pod{}).
+		Owns(&corev1.Secret{}).
+		Owns(&appsv1.DaemonSet{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&appsv1.ReplicaSet{}).
+		Owns(&appsv1.StatefulSet{}).
 		Named("kallucinate").
 		Complete(r)
 }

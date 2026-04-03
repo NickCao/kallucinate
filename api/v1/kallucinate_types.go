@@ -30,9 +30,7 @@ type KallucinateSpec struct {
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
 
-	// foo is an example field of Kallucinate. Edit kallucinate_types.go to remove/update
-	// +optional
-	Foo *string `json:"foo,omitempty"`
+	Prompt string `json:"prompt"`
 }
 
 // KallucinateStatus defines the observed state of Kallucinate.

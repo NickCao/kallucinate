@@ -39,10 +39,10 @@ spec:
           spec:
             description: spec defines the desired state of Kallucinate
             properties:
-              foo:
-                description: foo is an example field of Kallucinate. Edit kallucinate_types.go
-                  to remove/update
+              prompt:
                 type: string
+            required:
+            - prompt
             type: object
           status:
             description: status defines the observed state of Kallucinate

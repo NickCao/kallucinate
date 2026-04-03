@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -44,6 +45,8 @@ import (
 
 	genaiopenai "github.com/achetronic/adk-utils-go/genai/openai"
 )
+
+var RequeueAfter = 0
 
 // KallucinateReconciler reconciles a Kallucinate object
 type KallucinateReconciler struct {
@@ -79,6 +82,7 @@ func NewKallucinateReconciler(kclient client.Client, scheme *runtime.Scheme) (*K
 		Name:        "requeue",
 		Description: "requeue the Kallucinate CRD for reconcillation, duration in seconds",
 	}, func(ctx tool.Context, args RequeueArgs) (RequeueResult, error) {
+		RequeueAfter = args.Seconds
 		return RequeueResult{}, nil
 	})
 	if err != nil {
@@ -100,6 +104,7 @@ Your job:
 4. When creating resources, set ownerReferences as well as ownerReferences.controller to ensure update to the managed resources would notify you.
 5. The ownerReference.controller notification only works for certain resources: ConfigMap, Pod, Secret, DaemonSet, Deployment, ReplicaSet, and StatefulSet. For the other resources we rely on polling, you have to requeue the reconcillation request, and check if they have drifted manually on the next reconcile.
 Rules:
+6. Update the conditions on Kallucinate CRDs to reflect the status of the created resources.
 - All resources you create must be in the same namespace as the Kallucinate CRD that triggered this request, unless the prompt explicitly specifies otherwise.
 - Use the prompt as the source of truth for what SHOULD exist.
 - Use the current resource state to understand what DOES exist and whether it's healthy.
@@ -147,6 +152,7 @@ Rules:
 func (r *KallucinateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := logf.FromContext(ctx)
 
+	RequeueAfter = 0
 	for event, err := range r.runner.Run(ctx, "dummy", "dummy", &genai.Content{
 		Role: "user",
 		Parts: []*genai.Part{
@@ -158,7 +164,11 @@ func (r *KallucinateReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		logger.Info("event", "event", event, "err", err)
 	}
 
-	return ctrl.Result{}, nil
+	if RequeueAfter > 0 {
+		return ctrl.Result{RequeueAfter: time.Second * time.Duration(RequeueAfter)}, nil
+	} else {
+		return ctrl.Result{}, nil
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
